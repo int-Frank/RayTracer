@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{d7c2b0de-5e52-4cfb-9aae-bc8787ea6d35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DgLib">
+      <UniqueIdentifier>{15dd81de-b90b-4de0-ac11-afb4cffe9c8b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracerConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DgLib\include\config.h">
+      <Filter>DgLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DgLib\include\dgmath.h">
+      <Filter>DgLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DgLib\include\DgMatrix.h">
+      <Filter>DgLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DgLib\include\Matrix44.h">
+      <Filter>DgLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DgLib\include\Vector4.h">
+      <Filter>DgLib</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="test_gs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="test_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
