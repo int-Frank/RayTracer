@@ -85,8 +85,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\dev\glfw-3.1.1\bin\x64;C:\dev\glew-1.11.0\lib\Release\x64;..\DgLib\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\dev\glfw-3.1.1\bin\x64;C:\dev\glew-1.11.0\lib\Release\x64;..\DgLib\lib\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32.lib;opengl32.lib;glu32.lib;Math.lib;Utility.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,8 +116,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\dev\glfw-3.1.1\bin\x64;C:\dev\glew-1.11.0\lib\Release\x64;..\DgLib\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\dev\glfw-3.1.1\bin\x64;C:\dev\glew-1.11.0\lib\Release\x64;..\DgLib\lib\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32.lib;opengl32.lib;glu32.lib;Math.lib;Utility.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -135,9 +135,9 @@
     <ClInclude Include="scene.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="test_fs.glsl" />
-    <None Include="test_gs.glsl" />
-    <None Include="test_vs.glsl" />
+    <None Include="quad_fs.glsl" />
+    <None Include="quad_vs.glsl" />
+    <None Include="raytracer_cs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

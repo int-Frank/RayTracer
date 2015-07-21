@@ -91,39 +91,82 @@ GLuint Application::LoadShaderFromFile(std::string a_path, GLenum a_shaderType)
 	return shaderID;
 }
 
-GLuint Application::CompileShaders()
+
+GLuint Application::QuadFullScreenVao()
 {
-	GLuint vs = LoadShaderFromFile("test_vs.glsl", GL_VERTEX_SHADER);
+  glGenVertexArrays(1, &m_vao);
+  GLuint vbo(0);
+  glGenBuffers(1, &vbo);
+  glBindVertexArray(m_vao);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	//Check for errors
-	if( vs == 0 )
-		return 0;
+  char screenVertices[12] = {-1, -1,
+                              1, -1,
+                              1,  1, 
+                             -1, -1, 
+                             -1,  1, 
+                             -1, -1 };
 
-	GLuint fs = LoadShaderFromFile("test_fs.glsl", GL_FRAGMENT_SHADER);
-
-	//Check for errors
-	if (fs == 0)
-		return 0;
-
-	//GLuint gs = LoadShaderFromFile("test_gs.glsl", GL_GEOMETRY_SHADER);
-
-	////Check for errors
-	//if (gs == 0)
-	//	return 0;
-
-	//Create program, attach shaders to it and link it.
-	GLuint program = glCreateProgram();
-	glAttachShader(program, vs);
-	//glAttachShader(program, gs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-
-	return program;
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(screenVertices),
+               screenVertices,
+               GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 2, GL_BYTE, GL_FALSE, 0, NULL);
+  glEnableVertexAttribArray(0);
+  glBindVertexArray(0);
+  return m_vao;
 }
 
 
-void Application::init()
+GLuint Application::CreateQuadProgram()
 {
+  GLuint quadProgram = glCreateProgram();
+  GLuint vshader = LoadShaderFromFile("quad_vs.glsl", GL_VERTEX_SHADER);
+  GLuint fshader = LoadShaderFromFile("quad_fs.glsl", GL_FRAGMENT_SHADER);
+  glAttachShader(quadProgram, vshader);
+  glAttachShader(quadProgram, fshader);
+  glLinkProgram(quadProgram);
+  GLint linked(0);
+  glGetProgramiv(quadProgram, GL_LINK_STATUS, &linked);
+  return quadProgram;
+}
+
+
+void Application::InitQuadProgram()
+{
+  glUseProgram(m_quadProgram);
+  GLint texUniform = glGetUniformLocation(m_quadProgram, "tex");
+  glUniform1i(texUniform, 0);
+  glUseProgram(0);
+}
+
+
+GLuint Application::CreateComputeProgram()
+{
+  GLuint computeProgram = glCreateProgram();
+  GLuint cshader = LoadShaderFromFile("raytracer_cs.glsl", GL_VERTEX_SHADER);
+  glAttachShader(computeProgram, cshader);
+  glLinkProgram(computeProgram);
+  GLint linked(0);
+  glGetProgramiv(computeProgram, GL_LINK_STATUS, &linked);
+  return computeProgram;
+}
+
+
+void Application::InitComputeProgram()
+{
+  glUseProgram(m_computeProgram);
+  int workGroupSize[3] = {};
+  glGetProgramiv(m_computeProgram, GL_COMPUTE_WORK_GROUP_SIZE, workGroupSize);
+  m_workGroupSizeX = workGroupSize[0];
+  m_workGroupSizeY = workGroupSize[1];
+  glUseProgram(0);
+}
+
+
+void Application::Init()
+{
+  //Init defaults
 	strcpy_s(m_info.title, "Raytracer example");
 	m_info.windowWidth = 800;
 	m_info.windowHeight = 600;
@@ -140,77 +183,99 @@ void Application::init()
   m_prevY = 0.0;
   
   m_window = nullptr;
+
+  //Init GLFW
+  if (!glfwInit())
+  {
+    fprintf(stderr, "Failed to initialize GLFW\n");
+    return;
+  }
+
+  //Init Window
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, m_info.majorVersion);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, m_info.minorVersion);
+
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_SAMPLES, m_info.samples);
+  glfwWindowHint(GLFW_STEREO, m_info.flags.stereo ? GL_TRUE : GL_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+  if (m_info.flags.fullscreen)
+  {
+    if (m_info.windowWidth == 0 || m_info.windowHeight == 0)
+    {
+      const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+      m_info.windowWidth = mode->width;
+      m_info.windowHeight = mode->height;
+    }
+    m_window = glfwCreateWindow(m_info.windowWidth,
+      m_info.windowHeight,
+      m_info.title,
+      glfwGetPrimaryMonitor(),
+      NULL);
+    glfwSwapInterval((int)m_info.flags.vsync);
+  }
+  else
+  {
+    m_window = glfwCreateWindow(m_info.windowWidth,
+      m_info.windowHeight,
+      m_info.title,
+      NULL,
+      NULL);
+  }
+
+  if (!m_window)
+  {
+    fprintf(stderr, "Failed to open m_window\n");
+    glfwTerminate();
+    return;
+  }
+
+  glfwMakeContextCurrent(m_window);
+  glfwSwapInterval(1);
+
+  glfwSetKeyCallback(m_window, ::OnKeyCallback);
+  glfwSetCursorPosCallback(m_window, ::OnMouseMoveCallback);
+  m_info.flags.stereo = (glfwGetWindowAttrib(m_window, GLFW_STEREO) ? 1 : 0);
+
+  // start GLEW extension handler
+  glewExperimental = GL_TRUE;
+  glewInit();
+
+  // get version m_info
+  const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
+  const GLubyte* version = glGetString(GL_VERSION); // version as a string
+  printf("Renderer: %s\n", renderer);
+  printf("OpenGL version supported %s\n", version);
+
+  // Create all needed GL resources
+  m_tex = CreateFramebufferTexture();
+  m_vao = QuadFullScreenVao();
+  m_computeProgram = CreateComputeProgram();
+  InitComputeProgram();
+  m_quadProgram = CreateQuadProgram();
+  InitQuadProgram();
 }
 
 
-void Application::StartUp()
+GLuint Application::CreateFramebufferTexture()
 {
-  m_renderingProgram = CompileShaders();
-	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
-
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-
-	////Use this for inverse depth buffer
-	//glClearDepth(0.0f);
-	//glDepthFunc(GL_GREATER);
-
+  GLuint tex(0);
+  glGenTextures(1, &tex);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  GLchar * black(nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_info.windowWidth, m_info.windowHeight, 0, GL_RGBA, GL_FLOAT, black);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  return tex;
 }
 
 
 void Application::ShutDown()
 {
-	glDeleteVertexArrays(1, &m_vao);
-	glDeleteProgram(m_renderingProgram);
-	glDeleteVertexArrays(1, &m_vao);
-}
-
-
-void Application::Render(double a_currentTime)
-{
-	//Generate the cube transformation matrix
-	float f = (float)a_currentTime;
-  
-	Dg::Matrix44<float> translate, rotate, scale;
-  translate.Translation(Dg::Vector4<float>(0.0f, 0.0f, -2.0f, 0.0f));
-	rotate.Rotation(0.0f,
-    m_mouseX / 100.0f,
-    m_mouseY / 100.0f,
-    Dg::EulerOrder::XZY);
-  scale.Scaling(1.0f);
-  Dg::Matrix44<float> mv_matrix = rotate * scale * translate;
-
-  //printf("%d, %d\n", mouseX, mouseY);
-	//Set up the viewport
-	float ratio;
-	int width, height;
-
-	glfwGetFramebufferSize(m_window, &width, &height);
-	ratio = width / (float)height;
-
-	glViewport(0, 0, width, height);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	//Set up the perspective matrix;
-	Dg::Matrix44<float> proj_matrix;
-	proj_matrix.Perspective(1.5f, ratio, 0.1f, 1000.0f);
-
-	glUseProgram(m_renderingProgram);
-
-	GLint mv_loc = glGetUniformLocation(m_renderingProgram, "mv_matrix");
-	GLint proj_loc = glGetUniformLocation(m_renderingProgram, "proj_matrix");
-
-	glUniformMatrix4fv(mv_loc, 1, GL_FALSE, &mv_matrix[0]);
-	glUniformMatrix4fv(proj_loc, 1, GL_FALSE, &proj_matrix[0]);
-
-	//Clear the depth buffer
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	//Draw the triangle
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
-
 }
 
 
@@ -228,133 +293,56 @@ void Application::OnMouseMove(GLFWwindow* m_window, double x, double y)
 }
 
 
+void Application::Trace()
+{
+  glUseProgram(m_computeProgram);
+
+  // Bind level 0 of framebuffer texture as writable image in the shader.
+  glBindImageTexture(0, m_tex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+  // Compute appropriate invocation dimension.
+  int worksizeX = Dg::NextPower2(m_info.windowWidth);
+  int worksizeY = Dg::NextPower2(m_info.windowHeight);
+
+  /* Invoke the compute shader. */
+  glDispatchCompute(worksizeX / m_workGroupSizeX, worksizeY / m_workGroupSizeY, 1);
+
+  /* Reset image binding. */
+  glBindImageTexture(0, 0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+  glUseProgram(0);
+
+  /*
+  * Draw the rendered image on the screen using textured full-screen
+  * quad.
+  */
+  glUseProgram(m_quadProgram);
+  glBindVertexArray(m_vao);
+  glBindTexture(GL_TEXTURE_2D, m_tex);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindVertexArray(0);
+  glUseProgram(0);
+}
+
+
 void Application::Run()
 {
-	bool running = true;
+  //Init all systems and data
+  Init();
 
-	if (!glfwInit())
-	{
-		fprintf(stderr, "Failed to initialize GLFW\n");
-		return;
-	}
+  //Run the app
+  while (glfwWindowShouldClose(m_window) == GL_FALSE) 
+  {
+    glfwPollEvents();
+    glViewport(0, 0, m_info.windowWidth, m_info.windowHeight);
 
-	init();
+    Trace();
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, m_info.majorVersion);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, m_info.minorVersion);
+    glfwSwapBuffers(m_window);
+  }
 
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_SAMPLES, m_info.samples);
-	glfwWindowHint(GLFW_STEREO, m_info.flags.stereo ? GL_TRUE : GL_FALSE);
-
-	if (m_info.flags.fullscreen)
-	{
-		if (m_info.windowWidth == 0 || m_info.windowHeight == 0)
-		{
-			const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
-			m_info.windowWidth = mode->width;
-			m_info.windowHeight = mode->height;
-		}
-		m_window = glfwCreateWindow(	m_info.windowWidth,
-									m_info.windowHeight,
-									m_info.title,
-									glfwGetPrimaryMonitor(),
-									NULL);
-		glfwSwapInterval((int)m_info.flags.vsync);
-	}
-	else
-	{
-		m_window = glfwCreateWindow(	m_info.windowWidth,
-									m_info.windowHeight,
-									m_info.title,
-									NULL,
-									NULL);
-	}
-
-	if (!m_window)
-	{
-		fprintf(stderr, "Failed to open m_window\n");
-		glfwTerminate();
-		return;
-	}
-
-	glfwMakeContextCurrent(m_window);
-
-	glfwSetKeyCallback(m_window, ::OnKeyCallback);
-  glfwSetCursorPosCallback(m_window, ::OnMouseMoveCallback);
-	m_info.flags.stereo = (glfwGetWindowAttrib(m_window, GLFW_STEREO) ? 1 : 0);
-
-	// start GLEW extension handler
-	glewExperimental = GL_TRUE;
-	glewInit();
-
-	// get version m_info
-	const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
-	const GLubyte* version = glGetString(GL_VERSION); // version as a string
-	printf("Renderer: %s\n", renderer);
-	printf("OpenGL version supported %s\n", version);
-
-	StartUp();
-
-
-	//Set up the cube geometry
-	const GLfloat v_pos[] = {
-		0.5, -0.5, -0.5,
-		0.5, -0.5, 0.5,
-		-0.5, -0.5, 0.5,
-		-0.5, -0.5, -0.5,
-		0.5, 0.5, -0.5,
-		0.5, 0.5, 0.5,
-		-0.5, 0.5, 0.5,
-		-0.5, 0.5, -0.5
-	};
-
-	const GLushort v_ind[] = {
-		0, 1, 2,
-		0, 2, 3, 
-		4, 7, 6,
-		4, 6, 5,
-		0, 4, 5,
-		0, 5, 1,
-		1, 5, 6,
-		1, 6, 2,
-		2, 6, 7,
-		2, 7, 3, 
-		4, 0, 3,
-		4, 3, 7
-	};
-
-	//Generate some data and put it in a buffer object
-	glGenBuffers(1, &m_posBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, m_posBuffer);
-	glBufferData(GL_ARRAY_BUFFER,
-		sizeof(v_pos),
-		v_pos,
-		GL_STATIC_DRAW);
-
-	//Set the vertex attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
-
-	//Add index data
-	glGenBuffers(1, &m_indexBuffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(v_ind),
-		v_ind,
-		GL_STATIC_DRAW);
-  
-	do
-	{
-		Render(glfwGetTime());
-
-		glfwSwapBuffers(m_window);
-		glfwPollEvents();
-
-	} while (!glfwWindowShouldClose(m_window));
-
+  //Shut down and clean up.
 	ShutDown();
 
 	glfwDestroyWindow(m_window);

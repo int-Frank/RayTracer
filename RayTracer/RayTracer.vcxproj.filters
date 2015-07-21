@@ -55,13 +55,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="test_fs.glsl">
+    <None Include="quad_vs.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="test_gs.glsl">
+    <None Include="quad_fs.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="test_vs.glsl">
+    <None Include="raytracer_cs.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

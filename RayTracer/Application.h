@@ -77,25 +77,41 @@ public:
 
 private:
 
+  void Init();
+
+  GLuint LoadShaderFromFile(std::string path, GLenum shaderType);
+  void Trace();
+
+  GLuint QuadFullScreenVao();
+
+  GLuint CreateComputeProgram();
+  void InitComputeProgram();
+
+  GLuint CreateQuadProgram();
+  void InitQuadProgram();
+
+  GLuint CreateFramebufferTexture();
+
+  void ShutDown();
+
+private:
+
 	APPINFO		    m_info;
 	GLFWwindow*   m_window;
-	GLuint        m_renderingProgram;
-	GLuint        m_vao;
-	GLuint        m_posBuffer;
-	GLuint        m_indexBuffer;
 
-  double m_mouseX;
-  double m_mouseY; 
-  double m_prevX; 
-  double m_prevY;
+  GLint         m_workGroupSizeX;
+  GLint         m_workGroupSizeY;
 
-	//static		Application* app;
+  GLuint        m_vao;
+  GLuint        m_tex;
+  GLuint        m_computeProgram;
+  GLuint        m_quadProgram;
 
-	void init();
-	void StartUp();
-	void ShutDown();
-	GLuint CompileShaders();
-	GLuint LoadShaderFromFile(std::string path, GLenum shaderType);
+  double        m_mouseX;
+  double        m_mouseY; 
+  double        m_prevX; 
+  double        m_prevY;
+
 };
 
 #endif

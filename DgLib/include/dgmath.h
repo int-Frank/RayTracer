@@ -71,6 +71,9 @@ namespace Dg
   //! Floors a number to the nearest power of 2.
   uint32_t FloorPower2(uint32_t input);
 
+  //! Returns the next power of 2.
+  uint32_t NextPower2(uint32_t input);
+
   //! Inverse error function. Uses Mclaurin series expansion approximation.
   //! @param a_nTerms Number of terms in the series expansion to use. 0 denotes maximum number.
   double inverf_d(double a_x, unsigned a_nTerms = 16);
