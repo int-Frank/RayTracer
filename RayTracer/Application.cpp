@@ -128,6 +128,13 @@ GLuint Application::CreateQuadProgram()
   glLinkProgram(quadProgram);
   GLint linked(0);
   glGetProgramiv(quadProgram, GL_LINK_STATUS, &linked);
+  if (linked == 0)
+  {
+    GLchar buf[2048] = {};
+    GLsizei length;
+    glGetProgramInfoLog(quadProgram, 2048, &length, buf);
+    printf(buf);
+  }
   return quadProgram;
 }
 
@@ -149,6 +156,13 @@ GLuint Application::CreateComputeProgram()
   glLinkProgram(computeProgram);
   GLint linked(0);
   glGetProgramiv(computeProgram, GL_LINK_STATUS, &linked);
+  if (linked == 0)
+  {
+    GLchar buf[2048] = {};
+    GLsizei length;
+    glGetProgramInfoLog(computeProgram, 2048, &length, buf);
+    printf(buf);
+  }
   return computeProgram;
 }
 
@@ -156,7 +170,7 @@ GLuint Application::CreateComputeProgram()
 void Application::InitComputeProgram()
 {
   glUseProgram(m_computeProgram);
-  int workGroupSize[3] = {};
+  GLint workGroupSize[3] = {};
   glGetProgramiv(m_computeProgram, GL_COMPUTE_WORK_GROUP_SIZE, workGroupSize);
   m_workGroupSizeX = workGroupSize[0];
   m_workGroupSizeY = workGroupSize[1];
