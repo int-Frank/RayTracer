@@ -103,7 +103,7 @@ GLuint Application::QuadFullScreenVao()
   char screenVertices[12] = {-1, -1,
                               1, -1,
                               1,  1, 
-                             -1, -1, 
+                              1,  1, 
                              -1,  1, 
                              -1, -1 };
 
@@ -125,6 +125,8 @@ GLuint Application::CreateQuadProgram()
   GLuint fshader = LoadShaderFromFile("quad_fs.glsl", GL_FRAGMENT_SHADER);
   glAttachShader(quadProgram, vshader);
   glAttachShader(quadProgram, fshader);
+  glBindAttribLocation(quadProgram, 0, "vertex");
+  glBindFragDataLocation(quadProgram, 0, "color");
   glLinkProgram(quadProgram);
   GLint linked(0);
   glGetProgramiv(quadProgram, GL_LINK_STATUS, &linked);
@@ -151,7 +153,7 @@ void Application::InitQuadProgram()
 GLuint Application::CreateComputeProgram()
 {
   GLuint computeProgram = glCreateProgram();
-  GLuint cshader = LoadShaderFromFile("raytracer_cs.glsl", GL_VERTEX_SHADER);
+  GLuint cshader = LoadShaderFromFile("raytracer_cs.glsl", GL_COMPUTE_SHADER);
   glAttachShader(computeProgram, cshader);
   glLinkProgram(computeProgram);
   GLint linked(0);
