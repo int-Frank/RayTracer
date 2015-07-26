@@ -101,6 +101,9 @@ namespace Dg
     //! Removes the item in the map_p with key \a k.
     void erase(U k);
 
+    //! Removes the item in the map_p at position \a i.
+    void erase_at_position(int);
+
     //! Clear all items from the map_p, retains allocated memory.
     void clear();
 
@@ -368,6 +371,23 @@ namespace Dg
     m_currentSize--;
 
   }	//End: map_p::erase()
+
+
+  //--------------------------------------------------------------------------------
+  //	@	map_p<U,T>::erase_at_position()
+  //--------------------------------------------------------------------------------
+  template<typename U, typename T>
+  void map_p<U, T>::erase_at_position(int a_i)
+  {
+    if (a_i > 0 && a_i < m_currentSize)
+    {
+
+      memmove(&m_data[a_i], &m_data[a_i + 1], (m_currentSize - a_i - 1) * sizeof(Container));
+
+      m_currentSize--;
+    }
+
+  }	//End: map_p::erase_at_position()
 
 
   //--------------------------------------------------------------------------------
