@@ -18,7 +18,7 @@ namespace Dg
   {
   public:
 
-    Resource(DgRKey a_key): m_key(a_key) {}
+    Resource(RKey a_key) : m_key(a_key) {}
 
     virtual ~Resource() = 0;
 
@@ -28,10 +28,10 @@ namespace Dg
     virtual Dg_Result Init() = 0;
     virtual Dg_Result DeInit() = 0;
 
-    DgRKey GetKey(DgRKey a_key) const { return m_key; }
+    RKey GetKey() const { return m_key; }
 
   private:
-    DgRKey m_key;
+    RKey m_key;
   };
 }
 

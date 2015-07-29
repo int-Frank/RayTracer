@@ -14,6 +14,8 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#include "Camera.h"
+
 struct GLFWwindow;
 
 /*!
@@ -36,7 +38,13 @@ private:
   Application(const Application&);
   Application& operator= (const Application&);
 
-  Application() : m_window(nullptr){}
+  Application() : m_window(nullptr)
+    , m_w(false)
+    , m_s(false)
+    , m_a(false)
+    , m_d(false)
+    , m_r(false)
+    , m_f(false){}
   ~Application() {}
 
 public:
@@ -82,6 +90,8 @@ private:
   GLuint LoadShaderFromFile(std::string path, GLenum shaderType);
   void Trace();
 
+  void DoInput();
+
   GLuint QuadFullScreenVao();
 
   GLuint CreateComputeProgram();
@@ -107,11 +117,25 @@ private:
   GLuint        m_computeProgram;
   GLuint        m_quadProgram;
 
+  GLuint        m_eyeUniform;
+  GLuint        m_ray00Uniform;
+  GLuint        m_ray10Uniform;
+  GLuint        m_ray01Uniform;
+  GLuint        m_ray11Uniform;
+
   double        m_mouseX;
   double        m_mouseY; 
   double        m_prevX; 
   double        m_prevY;
 
+  bool          m_w;
+  bool          m_s;
+  bool          m_a;
+  bool          m_d;
+  bool          m_r;
+  bool          m_f;
+
+  Camera        m_camera;
 };
 
 #endif

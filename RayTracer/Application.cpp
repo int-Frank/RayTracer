@@ -18,7 +18,11 @@
 #include <string>
 #include <cstring>
 #include "Matrix44.h"
+#include "Vector4.h"
 #include <math.h>
+
+typedef Dg::Vector4<float> vec4;
+typedef Dg::Matrix44<float> mat4;
 
 Application * Application::s_instance(nullptr);
 
@@ -176,6 +180,11 @@ void Application::InitComputeProgram()
   glGetProgramiv(m_computeProgram, GL_COMPUTE_WORK_GROUP_SIZE, workGroupSize);
   m_workGroupSizeX = workGroupSize[0];
   m_workGroupSizeY = workGroupSize[1];
+  m_eyeUniform = glGetUniformLocation(m_computeProgram, "eye");
+  m_ray00Uniform = glGetUniformLocation(m_computeProgram, "ray00");
+  m_ray10Uniform = glGetUniformLocation(m_computeProgram, "ray10");
+  m_ray01Uniform = glGetUniformLocation(m_computeProgram, "ray01");
+  m_ray11Uniform = glGetUniformLocation(m_computeProgram, "ray11");
   glUseProgram(0);
 }
 
@@ -252,6 +261,19 @@ void Application::Init()
   glfwMakeContextCurrent(m_window);
   glfwSwapInterval(1);
 
+  //Set up the camera
+  m_camera.SetScreen((m_info.windowWidth / m_info.windowHeight), 1.0f);
+
+  //Set up the mouse
+  glfwSetCursorPos(m_window, 0.0, 0.0);
+  m_mouseX = 0.0;
+  m_mouseY = 0.0;
+  glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  //Set up keys
+  glfwSetInputMode(m_window, GLFW_STICKY_KEYS, GL_TRUE);
+
+
   glfwSetKeyCallback(m_window, ::OnKeyCallback);
   glfwSetCursorPosCallback(m_window, ::OnMouseMoveCallback);
   m_info.flags.stereo = (glfwGetWindowAttrib(m_window, GLFW_STEREO) ? 1 : 0);
@@ -304,14 +326,58 @@ void Application::OnKey(GLFWwindow* m_window, int key, int scancode, int action,
 
 void Application::OnMouseMove(GLFWwindow* m_window, double x, double y)
 {
+  double dx = x - m_mouseX;
+  double dy = y - m_mouseY;
+
+  m_camera.UpdateYPR(-dx/100.0, -dy/100.0, 0.0);
+
   m_mouseX = x;
   m_mouseY = y;
+}
+
+
+void Application::DoInput()
+{
+  if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)         m_w = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_RELEASE)  m_w = false;
+
+  if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)         m_s = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_RELEASE)  m_s = false;
+
+  if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)         m_a = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_RELEASE)  m_a = false;
+
+  if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)         m_d = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_RELEASE)  m_d = false;
+
+  if (glfwGetKey(m_window, GLFW_KEY_R) == GLFW_PRESS)         m_r = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_R) == GLFW_RELEASE)  m_r = false;
+
+  if (glfwGetKey(m_window, GLFW_KEY_F) == GLFW_PRESS)         m_f = true;
+  else if (glfwGetKey(m_window, GLFW_KEY_F) == GLFW_RELEASE)  m_f = false;
+
+
+  if (m_w) m_camera.MoveForward(0.1);
+  if (m_s) m_camera.MoveForward(-0.1);
+  if (m_a) m_camera.MoveLeft(0.1);
+  if (m_d) m_camera.MoveLeft(-0.1);
+  if (m_r) m_camera.MoveWorldUp(0.1);
+  if (m_f) m_camera.MoveWorldUp(-0.1);
+  
 }
 
 
 void Application::Trace()
 {
   glUseProgram(m_computeProgram);
+
+  vec4 ray00, ray01, ray10, ray11, eye;
+  m_camera.GetCornerRays(ray00, ray01, ray10, ray11, eye);
+  glUniform3f(m_eyeUniform, eye[0], eye[1], eye[2]);
+  glUniform3f(m_ray00Uniform, ray00[0], ray00[1], ray00[2]);
+  glUniform3f(m_ray01Uniform, ray01[0], ray01[1], ray01[2]);
+  glUniform3f(m_ray10Uniform, ray10[0], ray10[1], ray10[2]);
+  glUniform3f(m_ray11Uniform, ray11[0], ray11[1], ray11[2]);
 
   // Bind level 0 of framebuffer texture as writable image in the shader.
   glBindImageTexture(0, m_tex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
@@ -352,6 +418,8 @@ void Application::Run()
   {
     glfwPollEvents();
     glViewport(0, 0, m_info.windowWidth, m_info.windowHeight);
+
+    DoInput();
 
     Trace();
 

@@ -82,6 +82,26 @@ namespace Dg
   //! @param a_nTerms Number of terms in the series expansion to use. 0 denotes maximum number.
   float inverf_f(float a_x, unsigned a_nTerms = 16);
 
+
+  //! Set bits within an integer type.
+  template<typename IntType, unsigned Position, unsigned Length>
+  IntType SetBitSet(IntType a_input, IntType a_value)
+  {
+    IntType mask = 0;
+    for (unsigned i = 0; i < Length; ++i)
+    {
+      mask <<= 1;
+      mask |= 1;
+    }
+    a_value &= mask;
+    mask <<= Position;
+    mask = ~mask;
+    a_input &= mask;
+    a_input |= (a_value << Position);
+    return a_input;
+  }// End: SetBitSet()
+
+
   //! Wrap a number to a range.
   template<typename Real>
   void WrapNumber(Real lower, Real upper, Real& val)
@@ -99,7 +119,11 @@ namespace Dg
   template<typename Real>
   void WrapAngle(Real& val)
   {
-    val = val - static_cast<Real>(PI_d * 2.0)*floor(val / static_cast<Real>(PI_d * 2)) + static_cast<Real>(PI_d);
+    val = val - static_cast<Real>(PI_d * 2.0)*floor(val / static_cast<Real>(PI_d * 2));
+    if (val > static_cast<Real>(PI_d))
+    {
+      val -= static_cast<Real>(PI_d* 2.0);
+    }
   }	//End: WrapAngle()
 
 

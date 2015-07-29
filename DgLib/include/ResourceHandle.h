@@ -12,7 +12,9 @@
 
 namespace Dg
 {
-  //! Reference counted pointer to a resource.
+  //! Reference counted pointer to a resource. It essentially wraps access to the
+  //! ResourceManager. Avoid excessive copying as this Registers and Deregisters 
+  //! Resources in the ResourceManger.
   class hResource
   {
     friend class ResourceManager;
@@ -20,37 +22,19 @@ namespace Dg
   public:
 
     hResource() : m_resource(nullptr) {}
+    ~hResource();
+    hResource(hResource const & a_other);
+    hResource & operator=(hResource const & a_other);
 
-    ~hResource() { ResourceManager::Instance()->DeregisterUser(m_rKey); }
+    //! Conversion operator
+    Resource * operator->();
 
-    hResource(hResource const & a_other) : m_rKey(a_other.m_rKey)
-      , m_resource(ResourceManager::Instance()->RegisterUser(a_other.m_rKey))
-    {}
-
-    hResource & operator=(hResource const & a_other)
-    {
-      ResourceManager::Instance()->DeregisterUser(m_rKey);
-      m_rKey = a_other.m_rKey;
-      m_resource = ResourceManager::Instance()->RegisterUser(m_rKey);
-
-      return *this;
-    }
-
-    Resource * operator->()
-    {
-      return m_resource;
-    }
-
-    Resource & operator*()
-    {
-      return *m_resource;
-    }
+    //! Conversion operator
+    Resource & operator*();
 
   private:
 
     Resource * m_resource;
-    DgRKey m_rKey;
-
   };
 }
 
