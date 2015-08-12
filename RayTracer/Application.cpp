@@ -262,7 +262,7 @@ void Application::Init()
   glfwSwapInterval(1);
 
   //Set up the camera
-  m_camera.SetScreen((m_info.windowWidth / m_info.windowHeight), 1.0f);
+  m_camera.SetScreen((float(m_info.windowWidth) / float(m_info.windowHeight)), 1.0f);
 
   //Set up the mouse
   glfwSetCursorPos(m_window, 0.0, 0.0);

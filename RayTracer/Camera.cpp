@@ -102,13 +102,13 @@ void Camera::GetCornerRays(vec4 & a_ray00,
   m_matrix.GetRow(2, hLeft);
   m_matrix.GetRow(1, hUp);
   m_matrix.GetRow(0, forward);
-  hLeft *= 0.5f * m_ar;
+  hLeft *= (0.5f * m_ar);
   hUp *= 0.5f;
   forward *= m_projDist;
 
   a_ray00 = forward - hUp + hLeft;
-  a_ray01 = forward - hUp - hLeft;
-  a_ray10 = forward + hUp + hLeft;
+  a_ray10 = forward - hUp - hLeft;
+  a_ray01 = forward + hUp + hLeft;
   a_ray11 = forward + hUp - hLeft;
   m_matrix.GetRow(3, a_origin);
 }
