@@ -2,6 +2,10 @@
 
 layout(binding = 0, rgba32f) uniform image2D framebuffer;
 
+//--------------------------------------------------------------------------------------
+//  UNIFORMS
+//--------------------------------------------------------------------------------------
+
 uniform vec3 eye;
 uniform vec3 ray00;
 uniform vec3 ray01;
@@ -13,23 +17,19 @@ const int TYPE_NULL = -1;
 const int TYPE_AABB = 0;
 const int TYPE_SPHERE = 1;
 
-//Materials
+//--------------------------------------------------------------------------------------
+//  MATERIALS
+//--------------------------------------------------------------------------------------
+
 struct Materials
 {
   vec4 color;
 };
 
-const uint n_materials = 4;
+//--------------------------------------------------------------------------------------
+//  GEOMETRY CLASSES
+//--------------------------------------------------------------------------------------
 
-const Materials MaterialsList[n_materials] = 
-{
-  {vec4(1.0, 0.0, 0.0, 1.0)},
-  {vec4(1.0, 1.0, 0.0, 1.0)},
-  {vec4(1.0, 0.0, 1.0, 1.0)},
-  {vec4(0.0, 1.0, 1.0, 1.0)},
-};
-
-//Geomertries
 struct AABB 
 {
   vec3 min;
@@ -87,32 +87,11 @@ struct ConeSegment
   float r1;
 };
 
-#define MAX_SCENE_BOUNDS 100.0
-#define NUM_BOXES   2
-#define NUM_SPHERES 1
-
-const float dx = 10.0;
-const float dy = 10.0;
-const float dz = 10.0;
-
-const AABB boxes[] = 
-{
-  /* y */
-  {vec3(-2.5, -2.5 + dy, -2.5), vec3(2.5, 2.5 + dy, 2.5), 1},
-  /* z */
-  {vec3(-3.5, -3.5, -3.5 + dz), vec3(3.5, 3.5, 3.5 + dz), 3},
-};
-
-const Sphere spheres[] = 
-{
-  {vec3(-1.5 + dx, -1.5, -1.5), 2.0, 2}
-};
-
 struct HitInfo 
 {
-  int type;
+  int   type;
   float t;
-  int  index;
+  int   index;
 };
 
 struct Ray
@@ -121,11 +100,43 @@ struct Ray
   vec3 V;
 };
 
+//--------------------------------------------------------------------------------------
+//  SCENE OBJECTS
+//--------------------------------------------------------------------------------------
+
+#define MAX_SCENE_BOUNDS 100.0
+#define NUM_BOXES       2
+#define NUM_SPHERES     1
+#define NUM_MATERIALS   4
+
+const Materials MaterialsList[NUM_MATERIALS] = 
+{
+  {vec4(1.0, 0.0, 0.0, 1.0)},
+  {vec4(1.0, 1.0, 0.0, 1.0)},
+  {vec4(1.0, 0.0, 1.0, 1.0)},
+  {vec4(0.0, 1.0, 1.0, 1.0)},
+};
+
+const AABB boxes[NUM_BOXES] = 
+{
+  {vec3(-2.5, 8.5, -2.5), vec3(2.5, 12.5, 2.5), 1},
+  {vec3(-3.5, -3.5, 7.5), vec3(3.5, 3.5, 13.5), 3},
+};
+
+const Sphere spheres[NUM_SPHERES] = 
+{
+  {vec3(9.5, 0.0, 0.0), 2.0, 2}
+};
+
+//--------------------------------------------------------------------------------------
+//  INTERSECTION - SPHERE
+//--------------------------------------------------------------------------------------
+
 float IntersectSphereFromOutside(const Ray ray, const Sphere sphere)
 {
   vec3  P = ray.P - sphere.center;
-  float b = 2.0 * dot(P, ray.V);
   float a = dot(ray.V, ray.V);
+  float b = 2.0 * dot(P, ray.V);
   float c = dot(P, P) - sphere.radius * sphere.radius;
   float discriment = b * b - 4.0 * a * c;
 
@@ -149,8 +160,8 @@ float IntersectSphereFromOutside(const Ray ray, const Sphere sphere)
 float IntersectSphereFromInside(const Ray ray, const Sphere sphere)
 {
   vec3  P = ray.P - sphere.center;
-  float b = 2.0 * dot(P, ray.V);
   float a = dot(ray.V, ray.V);
+  float b = 2.0 * dot(P, ray.V);
   float c = dot(P, P) - sphere.radius * sphere.radius;
   float discriment = b * b - 4.0 * a * c;
 
@@ -180,6 +191,24 @@ float IntersectSphere(const Ray ray, const Sphere sphere)
   }
   return IntersectSphereFromOutside(ray, sphere);
 }
+
+void IntersectSpheres(const Ray ray, inout HitInfo info) 
+{
+  for (int i = 0; i < NUM_SPHERES; i++) 
+  {
+    float t = IntersectSphere(ray, spheres[i]);
+    if (t < info.t) 
+    {
+      info.type = TYPE_SPHERE;
+      info.t = t;
+      info.index = i;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------
+//  INTERSECTION - AABB
+//--------------------------------------------------------------------------------------
 
 float IntersectAABBFromOutside(const Ray ray, const AABB b) 
 {
@@ -241,19 +270,9 @@ void IntersectAABBs(const Ray ray, inout HitInfo info)
   }
 }
 
-void IntersectSpheres(const Ray ray, inout HitInfo info) 
-{
-  for (int i = 0; i < NUM_SPHERES; i++) 
-  {
-    float t = IntersectSphere(ray, spheres[i]);
-    if (t < info.t) 
-    {
-      info.type = TYPE_SPHERE;
-      info.t = t;
-      info.index = i;
-    }
-  }
-}
+//--------------------------------------------------------------------------------------
+//  TRACE RAY
+//--------------------------------------------------------------------------------------
 
 vec4 trace(const Ray ray) 
 {
@@ -276,6 +295,9 @@ vec4 trace(const Ray ray)
   return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
+//--------------------------------------------------------------------------------------
+//  MAIN
+//--------------------------------------------------------------------------------------
 
 layout (local_size_x = 16, local_size_y = 8) in;
 void main(void) {
@@ -285,8 +307,7 @@ void main(void) {
     return;
   }
   vec2 pos = vec2(pix) / vec2(size.x - 1, size.y - 1);
-  pos = 1 - pos;
-  vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
+  vec3 dir = mix(mix(ray00, ray01, pos.x), mix(ray10, ray11, pos.x), pos.y);
   Ray ray;
   ray.P = eye;
   ray.V = dir;
