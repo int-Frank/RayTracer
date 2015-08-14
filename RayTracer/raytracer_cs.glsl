@@ -17,6 +17,8 @@ const int TYPE_NULL = -1;
 const int TYPE_AABB = 0;
 const int TYPE_SPHERE = 1;
 
+const int NUM_REFLECTIONS = 3;
+
 //--------------------------------------------------------------------------------------
 //  MATERIALS
 //--------------------------------------------------------------------------------------
@@ -188,7 +190,7 @@ float IntersectSphere(const Ray ray, const Sphere sphere)
   if (dot(P_C, P_C) <= sphere.radius * sphere.radius)
   {
     return IntersectSphereFromInside(ray, sphere);
-  }
+   }
   return IntersectSphereFromOutside(ray, sphere);
 }
 
@@ -300,10 +302,12 @@ vec4 trace(const Ray ray)
 //--------------------------------------------------------------------------------------
 
 layout (local_size_x = 16, local_size_y = 8) in;
-void main(void) {
+void main(void) 
+{
   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);
   ivec2 size = imageSize(framebuffer);
-  if (pix.x >= size.x || pix.y >= size.y) {
+  if (pix.x >= size.x || pix.y >= size.y) 
+  {
     return;
   }
   vec2 pos = vec2(pix) / vec2(size.x - 1, size.y - 1);
